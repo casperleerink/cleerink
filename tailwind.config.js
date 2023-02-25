@@ -18,6 +18,7 @@ module.exports = {
         900: "#1E1E1E",
       },
       beige: "#F0E7B5",
+      deepblue: "#1B5E73",
     },
     extend: {
       keyframes: {
