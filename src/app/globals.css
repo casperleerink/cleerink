@@ -104,7 +104,7 @@
     30%,
     50% {
       @apply bg-beige h-[50%] w-[7%] top-1/2 left-[73%] rounded-xl;
-      transform: rotate(-24deg);
+      transform: rotate(-204deg);
     }
     60%,
     80% {

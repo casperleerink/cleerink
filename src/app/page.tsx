@@ -10,7 +10,7 @@ export default function Home() {
           <Block className="animate-[box1_6s_infinite_linear] hover:scale-105 transition-transform group overflow-hidden"></Block>
           <Block className="animate-[box2_6s_infinite_linear] hover:scale-105 transition-transform group overflow-hidden">
             <Link
-              href="/about"
+              href="/"
               className="block absolute -inset-2 opacity-0 group-hover:opacity-80 transition-opacity"
             >
               <div className="absolute inset-0 w-full h-full">
