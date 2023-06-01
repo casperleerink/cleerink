@@ -14,10 +14,12 @@ module.exports = {
       current: "currentColor",
       gray: {
         100: "#F3F3F3",
+        400: "#CCCCCC",
         800: "#25292B",
         900: "#1E1E1E",
       },
       beige: "#F0E7B5",
+      deepblue: "#1B5E73",
     },
     extend: {
       keyframes: {
