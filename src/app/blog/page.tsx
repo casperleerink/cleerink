@@ -1,0 +1,3 @@
+const BlogPage = () => {
+  return null;
+};
