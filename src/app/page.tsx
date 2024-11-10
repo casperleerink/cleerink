@@ -1,8 +1,7 @@
 import Block from "../components/Block";
-import { compareDesc, format, parseISO } from "date-fns";
-import { allPosts, Post } from "contentlayer/generated";
-import Link from "next/link";
-import { ArrowRight, ChevronRight } from "lucide-react";
+import { compareDesc } from "date-fns";
+import { allPosts } from "contentlayer/generated";
+import { PostCard } from "@/components/post-card";
 
 export default function Home() {
   const posts = allPosts.sort((a, b) =>
@@ -71,10 +70,7 @@ export default function Home() {
           </a>{" "}
           and am in the process of learning Go and Rust.
         </p>
-        <p className="text-gray-500">
-          Recently I have been writing some blog posts about things I am
-          interested in. You can find some recent examples below!
-        </p>
+        <h2 className="text-gray-500 text-lg font-medium">Writings</h2>
         <div className="flex flex-col gap-4">
           {posts.map((post) => (
             <PostCard key={post.url} {...post} />
@@ -84,20 +80,3 @@ export default function Home() {
     </main>
   );
 }
-
-const PostCard = (post: Post) => {
-  return (
-    <Link
-      href={post.url}
-      className="bg-gray-800 border border-gray-500/10 rounded-lg relative px-5 py-4 flex items-center justify-between"
-    >
-      <div className="flex flex-col gap-1">
-        <h2 className="text-xl">{post.title}</h2>
-        <time dateTime={post.date} className="block text-xs text-gray-500">
-          {format(parseISO(post.date), "LLLL d, yyyy")}
-        </time>
-      </div>
-      <ArrowRight />
-    </Link>
-  );
-};

@@ -29,7 +29,15 @@ module.exports = {
           "100%": { transform: "translateX(0)" },
         },
       },
+      typography: {
+        DEFAULT: {
+          css: {
+            "code::before": { content: '""' },
+            "code::after": { content: '""' },
+          },
+        },
+      },
     },
   },
-  plugins: [],
+  plugins: [require("@tailwindcss/typography")],
 };

@@ -7,22 +7,17 @@ interface Props {}
 
 const MatterChildren: React.FC<Props> = ({}) => {
   const slides = useSlides((state) => state.slides);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const addIndex = () => setCurrentIndex((old) => old + 1);
-  const addSlide = useSlides((state) => state.addSlide);
+  const { addSlide, done } = useSlides();
   const [width, height] = useContainerSize();
   const engine = useEngine();
 
   if (!width || !height) return null;
-
-  const done = currentIndex >= allSlides.length - 1;
   return (
     <>
       <div
         className="absolute inset-0"
         onWheel={(ev) => {
           if (!engine) return null;
-          engine.gravity.y = ev.deltaY * 0.05 + 0.02;
         }}
       />
       {slides.map((slide) => (
@@ -51,18 +46,9 @@ const MatterChildren: React.FC<Props> = ({}) => {
         <div
           onClick={() => {
             addSlide({
-              id: `${Math.random() * 100}`,
-              content: (
-                <div className="w-auto px-4 md:px-8 py-2 md:py-4 rounded-lg text-xs md:text-base border grid place-item-center bg-gradient-to-bl from-gray-800 to-black border-gray-800 text-gray-400">
-                  {allSlides[currentIndex]}
-                </div>
-              ),
-              initialPosition: {
-                x: Math.random(),
-                y: Math.random(),
-              },
+              width,
+              height,
             });
-            addIndex();
           }}
           className={`absolute inset-0 grid place-items-center hover:scale-105 transition-transform`}
         >
