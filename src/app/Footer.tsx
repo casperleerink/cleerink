@@ -1,17 +1,18 @@
-import { ChevronRight, Github, Linkedin } from "lucide-react";
+import { ChevronRight, Github, Linkedin, Mail } from "lucide-react";
 interface Props {
   className?: string;
 }
 
 const Footer: React.FC<Props> = ({ className = "" }) => {
   return (
-    <footer className="fixed z-10 bottom-0 inset-x-0 border-t border-gray-800 h-12 flex items-center justify-between px-8">
+    <footer className="fixed z-10 bottom-0 inset-x-0 border-t border-gray-800 bg-gray-900 h-12 flex items-center justify-between px-8">
       <div className="flex justify-center items-center gap-4">
         <a
           href="mailto:casperleerink@gmail.com"
           className="hover:text-beige transition-colors"
         >
-          casperleerink@gmail.com
+          <Mail size={16} />
+          {/* casperleerink@gmail.com */}
         </a>
         <a
           href="http://github.com/casperleerink/"

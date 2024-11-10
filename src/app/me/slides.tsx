@@ -14,15 +14,32 @@ interface Slide {
 
 interface Store {
   slides: Slide[];
-  addSlide: (slide: Slide) => void;
+  index: number;
+  done: boolean;
+  addSlide: ({ width, height }: { width?: number; height?: number }) => void;
 }
 
-export const useSlides = create<Store>((set) => ({
+export const useSlides = create<Store>((set, get) => ({
   slides: [],
-  addSlide: (slide) =>
+  addSlide: ({ width, height }) => {
     set((state) => ({
-      slides: [...state.slides, slide],
-    })),
+      slides: [
+        ...state.slides,
+        {
+          id: `${Math.random() * 100}`,
+          content: allSlides[state.index],
+          initialPosition: {
+            x: Math.random() * (width ?? 100),
+            y: Math.random() * (height ?? 100),
+          },
+        },
+      ],
+      index: state.index + 1,
+      done: state.index >= allSlides.length - 1,
+    }));
+  },
+  index: 0,
+  done: false,
   reset: () =>
     set({
       slides: [],
