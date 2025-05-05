@@ -1,32 +1,84 @@
 ---
-title: From Design to Development with Figma and tailwindcss
+title: From Design to Development with Figma and TailwindCSS
 date: 2024-10-06
 ---
 
-Developing user facing software without a designer often leads to products that simply do not look good. But very few developer resources or tutorials focus on the relationship between a designer and a developer. This article is for all the developers who are working together with a designer and want to implement a design with tailwindcss.
+Developing user-facing software without a designer often leads to clunky, visually inconsistent interfaces. But even when a designer is involved, many developer resources fail to address a crucial aspect of the workflow: **how to effectively translate a Figma design into code**, especially when using tools like TailwindCSS.
 
-## The problem
+This post is for developers collaborating with designers who want to turn designs into clean, consistent, production-ready UIs — without relying on rigid component libraries or bloated themes.
 
-I have been reading and watching a lot of tutorials or opinion pieces on how to create applications using technologies like [tailwindcss](https://tailwindcss.com/) or the [shadcn/ui](https://ui.shadcn.com/) library. And while I thoroughly enjoy this content and it is a great way to learn, I have found that in 1 certain aspect these resources are lacking. And this aspect is the implementation of an existing design and how that fits into the development process.
+---
 
-### Tooling
+## The Gap in Dev Resources
 
-When you work with a designer, a lot of tools that are marketed to developers are less useful. For example, it is hard to re-create a design in Figma with [v0](https://v0.dev/) (although it is still a perfect tool to use to get the logic/functionality of a component correct). Another example is the use of a component library like [MUI](https://mui.com/), using this library in a project will not give you the same look and feel as the design, and it will also not be as easy to implement the design as it would be if you were to implement it yourself. As we will see, tailwindcss solves this problem, as it allows full customization of every aspect of the design, while at the same time allowing you to restrict the possible styles to only the ones that are used in the design.
+I’ve consumed a lot of high-quality tutorials on TailwindCSS, [shadcn/ui](https://ui.shadcn.com/), and similar stacks. While they do a great job teaching how to build UI components or pages from scratch, they often overlook a key real-world scenario: **working from an existing Figma design**.
 
-## The solution
+Instead of inventing components in isolation, you’re implementing something that already exists — and that comes with very different constraints.
 
-### Communicate
+---
 
-The first step is to communicate with the designer. Having a common approach to the design that you both understand is essential. For example, maybe your designer has a specific color palette or font size set that they use in their design, but they have not stored those in the local styles or variables. In this case it would be good to ask the designer if they can provide these styles, so that you can use them while developing the project.
+## Why Tooling Alone Isn’t Enough
 
-Another example is that maybe your designer has designed a specific component in a way that is impractical to implement in your project, while it would be possible to implement such a component, it would for example impact the performance of the application or it would simply take too much time to implement. In such a case, you should ask the designer if there is a possibility they can provide a different approach to the component that would be more suitable for your project. Often times, the designer simply did not know this component is much more complex than it looks in the design, and they will happily change the design. If they are unwilling, it is usually for a good reason, and it might be worth the extra effort implementing the component.
+When working with a designer, many tools built for developer-first workflows fall short.
 
-### Use tailwind.config
+Take [v0](https://v0.dev/): it’s great for prototyping component logic, but reconstructing a Figma layout in v0 is inefficient. Or consider [MUI](https://mui.com/): while it offers fast results, it introduces visual and structural constraints that can clash with a bespoke design system.
 
-When you use tailwindcss, you have probably heard of the tailwind.config file. You probably have extended the default theme with your own colors and fonts. But in my opinion the true power of tailwind.config is not extending the default theme, but instead using it to completely overwrite the default theme for most of the classes, in my experience, when working with a figma design, I overwrite at least the colors, font sizes, font families and sometimes also the border radius values. Usually I do like to keep the default spacing values and screens, but might extend them if the design calls for it.
+By contrast, TailwindCSS provides low-level primitives with complete flexibility — which makes it ideal for implementing custom designs **accurately and maintainably**.
 
-By not extending the default theme but instead overwriting it, I can make sure that the classes that I use in my project are always the same as the ones that are used in the design. Furthermore, I can be sure that any team member that is working on the project will always have the same classes and values as the ones that are used in the design. Overwriting the default theme works very well with any tailwindcss editor extension like the one in VScode where you can see the classes that are being used in your project, so there is not much of a learning curve for new projects, even though you might not be able to use the default classes, you can simple start writing `bg-` and it will give you the list of all available background colors. Usually this list is also shorter because you only allow the colors that are used in the design.
+---
 
-### Headless UI
+## Step 1: Communicate
 
-In my experience, headless component libraries like [Radix Primitives](https://www.radix-ui.com/primitives) are a great help for developers having to implement a design. You can still use the functionality and accessibility of these components, but you don't have to worry about the styling. Even `shadcn/ui` can be a great help, as you are free to adjust any styling you want, but can still keep the default animations or other aspects of the design that are either the same or not specified in the design file.
+Before you code, align with your designer. A few critical conversations can save hours of rework.
+
+For example:
+
+- Are colors and font sizes defined as reusable styles or just inline? If not, ask for consistent tokens or variables.
+- Has a component been designed in a way that’s unusually complex to implement? Explain the trade-offs — performance, effort, limitations — and work together on a better alternative if needed.
+
+Designers often appreciate this feedback. They may not know a UI interaction is expensive to build — and a collaborative approach will usually result in better outcomes for both sides.
+
+---
+
+## Step 2: Tailor `tailwind.config.js` to the Design
+
+Most devs know they can extend Tailwind’s theme. But when working from a fixed design system, I recommend something stronger: **override the default theme entirely**.
+
+In most projects, I overwrite:
+
+- Colors
+- Font families
+- Font sizes
+- (Sometimes) Border radii
+
+I typically leave spacing and breakpoints as-is or extend them slightly.
+
+Why overwrite?
+
+- It forces consistency with the design: you can’t “accidentally” use arbitrary values.
+- It improves autocomplete: Tailwind extensions like VSCode’s IntelliSense will only show valid tokens (e.g., just your project colors when typing `bg-`).
+- It ensures that every team member uses the same design-aligned set of values.
+
+This turns Tailwind into a tightly scoped design implementation system — not just a utility-first CSS framework.
+
+---
+
+## Step 3: Use Headless UI Primitives
+
+To stay aligned with design while keeping dev speed and accessibility, use **headless component libraries** like [Radix Primitives](https://www.radix-ui.com/primitives).
+
+They give you:
+
+- Accessibility and logic out of the box
+- Zero styling constraints
+- Full flexibility to match your Figma spec
+
+Even [shadcn/ui](https://ui.shadcn.com/) can work well — you can freely adjust styling while keeping animations, ARIA attributes, or behaviors that match your needs.
+
+---
+
+## Final Thoughts
+
+Implementing real designs isn’t about pixel-perfect reproduction — it’s about **collaboration**, **clarity**, and **discipline**. TailwindCSS, when paired with strong communication and a design-aligned configuration, enables teams to build beautiful, consistent UIs without friction.
+
+Don’t fight your tools — shape them to match your process.
