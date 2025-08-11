@@ -1,4 +1,4 @@
-import { ExternalLinkIcon, GithubIcon } from "lucide-react";
+import { WorkItem } from "@/components/work-item";
 
 export default function Home() {
   return (
@@ -27,10 +27,10 @@ export default function Home() {
           </div>
           <ul className="grid grid-cols-1 sm:grid-cols-2 items-start gap-4 sm:gap-8">
             <WorkItem
-              title="Hoooman Studio"
-              description="Marketing Website for Hooman Studio"
+              title="Hooman Dashboard"
+              description="Client and project management app for Hooman Studio"
               github="https://github.com/Hooman-studio"
-              website="https://hoooman.com/studio"
+              website="https://hooman.com/dashboard"
             />
             <WorkItem
               title="UnitIQ"
@@ -53,44 +53,3 @@ export default function Home() {
     </main>
   );
 }
-
-const WorkItem = ({
-  title,
-  description,
-  github,
-  website,
-}: {
-  title: string;
-  description: string;
-  github?: string;
-  website?: string;
-}) => {
-  return (
-    <li className="flex flex-col p-4 gap-4 rounded-lg md:rounded-xl border border-gray-500/10 bg-gray-800/30">
-      <div className="flex items-center justify-between">
-        <h3 className="font-medium text-lg">
-          {website ? (
-            <a href={website} target="_blank" rel="noopener noreferrer">
-              {title}
-            </a>
-          ) : (
-            title
-          )}
-        </h3>
-        <div className="flex items-center gap-3">
-          {github ? (
-            <a href={github} target="_blank" rel="noopener noreferrer">
-              <GithubIcon size={20} />
-            </a>
-          ) : null}
-          {website ? (
-            <a href={website} target="_blank" rel="noopener noreferrer">
-              <ExternalLinkIcon size={20} />
-            </a>
-          ) : null}
-        </div>
-      </div>
-      <p className="text-sm text-gray-500">{description}</p>
-    </li>
-  );
-};

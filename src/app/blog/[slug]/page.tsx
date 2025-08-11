@@ -26,7 +26,7 @@ const PostLayout = ({ params }: { params: { slug: string } }) => {
           </h1>
         </div>
         <div
-          className="prose lg:prose-lg prose-invert prose-code:bg-beige prose-code:py-0.5 prose-code:rounded prose-code:px-1 prose-code:text-gray-900"
+          className="prose lg:prose-lg prose-invert"
           dangerouslySetInnerHTML={{ __html: post.body.html }}
         />
       </article>
