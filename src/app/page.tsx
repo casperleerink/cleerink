@@ -93,9 +93,9 @@ export default function Home() {
               website="https://hooman.com/dashboard"
             />
             <WorkItem
-              title="UnitIQ"
+              title="Havium"
               description="Web Application for real estate investors"
-              website="https://unitiq.vercel.app"
+              website="https://havium.com/"
             />
             <WorkItem
               title="Contractor Connect"
