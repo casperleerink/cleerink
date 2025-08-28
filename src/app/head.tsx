@@ -1,9 +1,41 @@
 export default function Head() {
   return (
     <>
-      <title>Casper Leerink</title>
+      <title>Casper Leerink — Full‑stack Engineer</title>
       <meta content="width=device-width, initial-scale=1" name="viewport" />
-      <meta name="description" content="Personal website of Casper Leerink" />
+      <meta
+        name="description"
+        content="Full‑stack engineer focused on type‑safe React/Next.js apps. Explore featured work, writings, and contact info."
+      />
+      {/* Open Graph */}
+      <meta
+        property="og:title"
+        content="Casper Leerink — Full‑stack Engineer"
+      />
+      <meta
+        property="og:description"
+        content="Full‑stack engineer focused on type‑safe React/Next.js apps. Explore featured work, writings, and contact info."
+      />
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content="https://casperleerink.com/" />
+      <meta
+        property="og:image"
+        content="https://res.cloudinary.com/casperleerink/image/upload/v1607865933/headshot.jpg"
+      />
+      {/* Twitter */}
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta
+        name="twitter:title"
+        content="Casper Leerink — Full‑stack Engineer"
+      />
+      <meta
+        name="twitter:description"
+        content="Full‑stack engineer focused on type‑safe React/Next.js apps. Explore featured work, writings, and contact info."
+      />
+      <meta
+        name="twitter:image"
+        content="https://res.cloudinary.com/casperleerink/image/upload/v1607865933/headshot.jpg"
+      />
       <link
         rel="apple-touch-icon"
         sizes="180x180"
