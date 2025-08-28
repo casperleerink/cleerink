@@ -15,7 +15,7 @@ export default function Home() {
       <div className="mx-auto max-w-screen-lg flex flex-col gap-12">
         <section className="flex flex-col gap-6">
           <h1 className="font-semibold text-3xl md:text-4xl leading-tight">
-            Product‑minded full‑stack engineer with a design background
+            Product‑minded full‑stack engineer with a music background
           </h1>
           <p className="text-gray-500 max-w-2xl">
             I’m originally from the Netherlands, where I studied piano
@@ -35,9 +35,9 @@ export default function Home() {
           <div className="flex flex-wrap items-center gap-3">
             <a
               href="#featured"
-              className="px-4 py-2 rounded-md bg-beige text-gray-900 font-medium border border-beige/20 hover:opacity-90 transition"
+              className="px-4 scroll-smooth py-2 rounded-md bg-beige text-gray-900 font-medium border border-beige/20 hover:opacity-90 transition"
             >
-              View Featured Work
+              View Work
             </a>
             <a
               href="https://github.com/Hooman-studio"

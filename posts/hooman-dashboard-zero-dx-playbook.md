@@ -1,383 +1,77 @@
 ---
-title: Building a Fast, Local‑First Dashboard with Zero, A Practical DX Playbook
+title: Building Apps with Sync Engines - A Developer’s Perspective
 date: 2025-08-09
 ---
 
-Building a multi‑tenant dashboard is usually a juggling act: real‑time updates, offline‑tolerant UX, authorization rules, and a lot of boilerplate to glue it together. This post shows how adopting Zero (a local‑first, real‑time data layer) streamlines the developer experience end‑to‑end. We’ll walk through bootstrapping a typed client, composing queries that feel like a local DB, centralizing authorization in shared mutators, preloading for instant UX, URL‑driven UI, notifications, and a small dev Inspector. We’ll wrap with two end‑to‑end examples and a minimal recipe for shipping new features fast — plus common footguns to avoid.
+In the past few months, I have been working on the Hooman Dashboard, a client and project management app for freelancers and small companies. The goal is to provide a centralized hub for client interactions and task management — a tool that service companies like ours can use to manage their day-to-day and keep track of all tasks across all clients. Inspired by products like [Linear](https://linear.app/) and [Superhuman](https://superhuman.com/), I wanted the app to feel effortless to use, so I looked into local‑first approaches, and specifically sync engines.
 
-## Who this is for
+## Sync Engines vs Traditional APIs
 
-- **Frontend engineers building collaborative dashboards**
-- **Teams wanting typed queries/mutations, offline‑ready UX, and simple multi‑tenant safety**
-- **Readers comfortable with React and TypeScript**
-
-## 1) Architecture at a glance
-
-- **Shell**: An authenticated route wraps the dashboard with providers (auth, organization, hotkeys, Zero data).
-- **State model**: Data flows via typed `z.query.*` hooks and `z.mutate.*` calls; dialogs and selections are driven by URL search params.
-- **DX pillars**:
-  - Single Zero client with auth baked in
-  - Query builder that fetches relations and caches by default
-  - Shared mutators centralizing auth checks and side effects
-  - Preload high‑value queries for instant navigation
-  - Optional dev Inspector to view live client state
-
----
-
-## 2) Bootstrapping Zero once
-
-Goal: Create a single Zero client instance with auth and mutators; provide it to the app.
-
-Steps:
-
-1. Retrieve user session (token, user ID, role, organization ID).
-2. Initialize Zero with server base URL, `userID`, `auth`, `schema`, `mutators`, and `onOnlineChange`.
-3. Wrap the app with `ZeroProvider`.
-
-Output: A globally available, typed Zero client.
+When building traditional web apps, you're used to a request-response cycle: fetch data from the server, display it, and when users make changes, send mutations to the server and then refetch or invalidate cached data to stay in sync. Using TanStack Query, this cycle might look something like this:
 
 ```ts
-const z = new Zero<Schema, Mutators>({
-  server: ENV.SERVER_URL,
-  userID: session.user.id,
-  auth: session.token,
-  schema,
-  mutators: createMutators({
-    sub: session.user.id,
-    role: session.role,
-    organizationId: session.organizationId,
-  }),
-  onOnlineChange: setOnline,
+const tasks = useQuery({
+  queryKey: ["tasks"],
+  queryFn: getTasks,
+});
+
+// In the same or a different component
+const addTask = useMutation({
+  mutationFn: createTask,
+  onSuccess: async () => {
+    await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+  },
 });
 ```
 
----
+This approach works well for many applications, but it has some limitations:
 
-## 3) Strong typing everywhere
+1. It requires two network requests, one for the mutation and one to refetch the data.
+2. It is easy to miss a cache invalidation unless you refetch everything on the page. For example, you might have another milestones query, and on those milestones you also fetch the tasks or the task count, but you didn't invalidate that query so you still see the old numbers.
 
-Create a single `useZero` hook with your `Schema` and `Mutators` types. All queries/mutations become typed — including related rows and mutator args.
+**Note:**
+_Before Single Page Apps, the pattern usually involved refreshing the entire page after a mutation, but the pattern is mostly the same. React Server Components provide a method to consistently make only one network request, yet I find the existing caching mechanisms (in Next.js) still introduce significant complexity and challenges._
+
+I find these limitations quite painful, especially in apps where the user makes a lot of mutations like our dashboard.
+
+In a sync engine (spoiler: I chose [Zero](https://zero.rocicorp.dev/) from Rocicorp) this mutation pattern is very different.
+
+With Zero, you still query the data in a similar way, although in most cases the data will already be in a local IndexedDB or another local data store, so the query is instant.
 
 ```ts
-export const useZero = () => useZeroPrimitive<Schema, Mutators>();
+const [tasks] = useQuery(z.query.tasks);
 ```
 
----
-
-## 4) Modeling queries like a local DB
-
-Approach:
-
-- **Compose** queries with predicates (`where`, `orderBy`) and relations via `.related(...)`.
-- **Subscribe** to results with a React hook.
-- **Stabilize** UX with debounce/defer for search and `CACHE_AWHILE` for non‑critical freshness.
-
-Patterns:
-
-- **Multi‑tenant safety**: Always scope by `organizationId`.
-- **Sorting and limiting**: For overview cards or summaries.
-- **Hook‑wrapper reuse**: `useTaskList`, `useGetThread`, etc.
-
-Example “get thread” hook:
+Then you just have to call the mutation, nothing to invalidate.
 
 ```ts
-function useGetThread({
-  threadId,
-  messagesLimit = 100,
-}: {
-  threadId: string;
-  messagesLimit?: number;
-}) {
-  const z = useZero();
-  const [thread] = useQuery(
-    z.query.thread
-      .where("id", "=", threadId)
-      .related("users", (q) => q.related("user"))
-      .related("tasks")
-      .related("messages", (q) =>
-        q.orderBy("created_at", "desc").limit(messagesLimit)
-      )
-      .one()
-  );
-  return thread;
+const addTask = () => {
+  await z.mutate.task.create({
+    ...,
+  }).client;
 }
 ```
 
----
+Everything gets updated automatically — even any other queries that reference this newly added task, like the milestone task counter.
 
-## 5) Mutations with guardrails (client code stays tiny)
+Furthermore, with sync engines, another major benefit is that changes made by anyone else are updated in real time as well; even if you manually update something in the database, it will be synced to all connected clients.
 
-Philosophy: UI performs one‑liners; shared mutators hold authorization and side‑effects.
+For more information about what a sync engine exactly is I recommend this article: [What is Sync?](https://zero.rocicorp.dev/docs/sync)
 
-Centralized checks:
+## Sync Engine Requirements
 
-- `assertIsLoggedIn`, `assertIsAdmin`, `assertIsInOrganization`, etc.
+These benefits do not come for free; they require more setup, as the sync engine must know your database schema to synchronize queries. Queries are also limited to what Zero’s query language provides. So far I have found very few limitations, except for aggregations — but this depends on your app, and it’s worth reading [this page](https://zero.rocicorp.dev/docs/reading-data) and also [this one](https://zero.rocicorp.dev/docs/when-to-use) before rewriting your entire application!
 
-Side‑effects:
+One of the benefits of working with Zero is a feature called [Custom Mutators](https://zero.rocicorp.dev/docs/custom-mutators), which allows you to create any kind of mutation. It lets you add custom validation logic (often required) and any server-only logic on your own API endpoint, such as handling notifications or other third-party integrations — similar to a [tRPC endpoint](/blog/end-to-end-typesafety-to-ship-fast) — but with the benefit that every mutation feels instant to the user because the local data is updated first.
 
-- Derived updates (e.g., update `updated_at`, unread flags)
-- Activity logging and notifications
+For Zero, you will also need to deploy the zero-cache server, which is another piece of infrastructure — in addition to your database and web application — that you will have to manage.
 
-Location control:
+## Everything reacts instantly? New UX problems arise
 
-- `.client` for local‑first ack; `.server` for server‑only tasks
+The funny thing about instant reactivity is that users do not always expect it, even though they unconsciously [appreciate it](https://www.linkedin.com/pulse/breaking-down-latency-how-delays-affect-user-yash-bisht-p5loc/).
 
-UI call example:
+In my case, I was working on a task priority module. This priority updates the sorting order of the list, so when it’s clicked the task moves to a different place. Even though I added a layout animation that shows the task moving from one position to another, there is still a jarring effect when an action immediately reorders the list. In this case, I ended up adding a 300 ms debounce before the mutation to prevent the reordering from happening instantaneously.
 
-```ts
-await z.mutate.thread.createReply({
-  id: nanoid(),
-  threadId,
-  message: editorJSON,
-  createdAt: Date.now(),
-}).client;
-```
+## Conclusion
 
-Mutator (conceptual skeleton):
-
-```ts
-async function createReply(tx, { id, threadId, message, createdAt }) {
-  const session = assertIsLoggedIn(authData);
-  const thread = await tx.query.thread.where("id", "=", threadId).one().run();
-  await assertIsInOrganization(session, tx.query.thread, threadId);
-  await tx.mutate.thread_message.insert({
-    id,
-    thread_id: threadId,
-    message,
-    created_by_id: session.sub,
-    workspace_id: session.organizationId,
-    created_at: createdAt,
-  });
-  // Update unread flags for other users + bump thread.updated_at
-}
-```
-
----
-
-## 6) Preloading for instant UX
-
-Why: Improve first‑paint and tab switching by prefetching common lists.
-
-What to preload:
-
-- Current user’s notifications
-- Incomplete tasks with relations
-- Threads visible to the user
-- Clients and active milestones
-
-Implementation: Call `.preload()` on queries during app start or org change, then await `.complete`.
-
-```ts
-await Promise.all([
-  z.query.task
-    .where("workspace_id", "=", orgId)
-    .where("completed", "IS NOT", true)
-    .related("milestone")
-    .related("client")
-    .related("assignee")
-    .preload(CACHE_AWHILE).complete,
-  z.query.thread
-    .where("workspace_id", "=", orgId)
-    .where("archived", "=", false)
-    .related("users", (q) => q.related("user"))
-    .orderBy("updated_at", "desc")
-    .preload(CACHE_AWHILE).complete,
-  // ...
-]);
-```
-
----
-
-## 7) URL‑driven UI (dialogs and deep links)
-
-- **Validate** URL search params with a schema (e.g., `taskId`, `threadId`).
-- **Use URL state** to open dialogs instead of local component state.
-
-Benefits:
-
-- Shareable, bookmarkable states
-- Better back/forward navigation
-- Notifications can deep‑link into the dashboard
-
-```ts
-const [search, setSearch] = useSearch(); // e.g., via your router
-// Open task dialog
-setSearch({ taskId: someId });
-// Close dialog but preserve other params
-setSearch((prev) => ({ ...prev, taskId: undefined }));
-```
-
----
-
-## 8) Realtime + offline affordances
-
-- Online indicator via `onOnlineChange`
-- Optimistic UI: Call mutations `.client` first; server reconciles later
-- Lists auto‑update through query subscriptions
-
-UI patterns:
-
-- Disabled “Send” button during uploads
-- Banner for offline mode
-
----
-
-## 9) Notifications and deep linking
-
-Post‑commit fan‑out:
-
-- Database notifications
-- Email (compose link with `?taskId=` or `?threadId=`)
-- Push notifications via saved subscriptions
-
-Flow:
-
-- Save push subscription from client (VAPID)
-- On server, fetch subscriptions by user and send payload with the URL
-
-UI entry: Landing the user on the dashboard with prefilled URL state opens the dialog immediately.
-
----
-
-## 10) Dev tooling: The Inspector
-
-A dev‑only control to inspect:
-
-- Current client
-- Cached rows per table
-- Active queries across the client group
-
-This helps debug “what is in memory” without custom logging.
-
----
-
-## 11) Example A: “Reply to discussion” end‑to‑end
-
-Goal: Add a rich‑text reply box to a discussion detail dialog.
-
-Steps:
-
-1. Query: `useGetThread({ threadId, messagesLimit: 100 })`
-2. UI: Editor component + “Send” button; disable while uploads are in progress
-3. Mutation: `z.mutate.thread.createReply({...}).client`
-4. Auto‑updates:
-   - Messages list updates via subscription
-   - Unread flags set for other collaborators
-   - Thread `updated_at` bumps for ordering
-5. URL: Keep `threadId` in search params so reload/deep‑link lands in the same dialog
-
----
-
-## 12) Example B: “Task quick updates” micro‑interactions
-
-Goal: Toggle fields with minimal UI (complete, urgent, assign, reviewer).
-
-Steps:
-
-- Complete checkbox calls `z.mutate.task.update({ id, completed: true })`.
-- Urgent toggle calls `z.mutate.task.update({ id, urgent: !urgent })`.
-- Assign dropdown calls `z.mutate.task.update({ id, assigned_id })`.
-- Reviewer chip toggles `z.mutate.task_reviewer.create/delete`.
-
-Derived effects:
-
-- Activity creation for “assign” or “complete.”
-- Updating related `client.updated_at` when relevant.
-
-Result: The list updates live; details dialog can be opened via URL as needed.
-
----
-
-## 13) Performance notes
-
-- Use `.limit()` and sort appropriately for “overview” widgets
-- Preload common lists for instant tab switching
-- Virtualize long lists (for discussion messages or task feeds)
-- Debounce and defer search inputs
-
----
-
-## 14) Security and multi‑tenancy checklist
-
-- Always assert `organizationId` matches for queried/updated rows in mutators
-- Prefer “am I allowed?” checks (`assertIsAdmin`, “is reviewer or admin?”, “is assigned or admin?”)
-- Never trust client IDs directly; read rows inside transactions before mutating
-- Keep role checks in shared mutators, not components
-
----
-
-## 15) Minimal “new feature” recipe
-
-- **Define**: Add schema fields/tables as needed
-- **Query**: Write a hook that scopes by org and pulls required relations
-- **Mutate**: Add a mutator with auth checks and any side‑effects
-- **UI**: Call `z.mutate.*` from the component; subscribe via your hook
-- **Preload (optional)**: If it improves UX, add to preload
-- **URL state (optional)**: If you need dialogs/deep links, add validated search params
-- **Debug**: Use Inspector during dev
-
----
-
-## 16) Appendix: Template snippets
-
-Typed hook:
-
-```ts
-export const useZero = () => useZeroPrimitive<Schema, Mutators>();
-```
-
-Query wrapper:
-
-```ts
-function useTaskList({ filters, orderBy }: Args) {
-  const z = useZero();
-  const [tasks] = useQuery(
-    z.query.task
-      .where("workspace_id", "=", orgId)
-      // add filter predicates...
-      .related("client")
-      .related("milestone")
-      .related("assignee")
-      .orderBy("estimated_date", "asc"),
-    CACHE_AWHILE
-  );
-  return tasks ?? [];
-}
-```
-
-Mutator signature:
-
-```ts
-export function createMutators(auth?: AuthData) {
-  return {
-    task: {
-      async update(tx, change: UpdateValue<typeof schema.tables.task>) {
-        const session = assertIsLoggedIn(auth);
-        await assertIsInOrganization(session, tx.query.task, change.id);
-        await tx.mutate.task.update(change);
-        // optional: create activity, touch related client, etc.
-      },
-    },
-    // ...
-  } satisfies CustomMutatorDefs<typeof schema>;
-}
-```
-
-Preload:
-
-```ts
-await z.query.notification
-  .where("user_id", "=", z.userID)
-  .orderBy("created_at", "desc")
-  .limit(20)
-  .preload(CACHE_AWHILE).complete;
-```
-
-Notifications (conceptual):
-
-```ts
-await notifyAll(tx, { type, user_id, entity_id, metadata }, postCommitTasks, [
-  databaseNotificationChannel(tx),
-  emailNotificationChannel(tx),
-  pushNotificationChannel(tx),
-]);
-```
+Adopting a sync engine like Zero shifts the mental model from request/response to local‑first data with optimistic, automatic consistency. It adds setup and infrastructure (schema modeling and the zero‑cache server) and introduces new UX considerations around “instant” updates, but for high‑mutation, collaborative apps like the Hooman Dashboard the trade‑off is worth it: the UI feels fast, data stays predictable across views, and server‑only logic remains possible via Custom Mutators.

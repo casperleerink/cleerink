@@ -3,7 +3,7 @@ title: From Design to Development with Figma and TailwindCSS
 date: 2024-10-06
 ---
 
-Developing user-facing software without a designer often leads to clunky, visually inconsistent interfaces. But even when a designer is involved, many developer resources fail to address a crucial aspect of the workflow: **how to effectively translate a Figma design into code**, especially when using tools like TailwindCSS.
+Developing user-facing software without a designer often leads to clunky, visually inconsistent interfaces. Even when a designer is involved, many developer resources fail to address a crucial aspect of the workflow: **how to effectively translate a Figma design into code**, especially when using tools like TailwindCSS.
 
 This post is for developers collaborating with designers who want to turn designs into clean, consistent, production-ready UIs — without relying on rigid component libraries or bloated themes.
 
@@ -11,7 +11,7 @@ This post is for developers collaborating with designers who want to turn design
 
 ## The Gap in Dev Resources
 
-I’ve consumed a lot of high-quality tutorials on TailwindCSS, [shadcn/ui](https://ui.shadcn.com/), and similar stacks. While they do a great job teaching how to build UI components or pages from scratch, they often overlook a key real-world scenario: **working from an existing Figma design**.
+I’ve consumed many high-quality tutorials on TailwindCSS, [shadcn/ui](https://ui.shadcn.com/), and similar stacks. While they do a great job teaching how to build UI components or pages from scratch, they often overlook a key real-world scenario: **working from an existing Figma design**.
 
 Instead of inventing components in isolation, you’re implementing something that already exists — and that comes with very different constraints.
 
@@ -23,7 +23,7 @@ When working with a designer, many tools built for developer-first workflows fal
 
 Take [v0](https://v0.dev/): it’s great for prototyping component logic, but reconstructing a Figma layout in v0 is inefficient. Or consider [MUI](https://mui.com/): while it offers fast results, it introduces visual and structural constraints that can clash with a bespoke design system.
 
-By contrast, TailwindCSS provides low-level primitives with complete flexibility — which makes it ideal for implementing custom designs **accurately and maintainably**.
+By contrast, TailwindCSS provides low-level primitives with complete flexibility — making it ideal for implementing custom designs **accurately and maintainably**.
 
 ---
 
@@ -36,13 +36,13 @@ For example:
 - Are colors and font sizes defined as reusable styles or just inline? If not, ask for consistent tokens or variables.
 - Has a component been designed in a way that’s unusually complex to implement? Explain the trade-offs — performance, effort, limitations — and work together on a better alternative if needed.
 
-Designers often appreciate this feedback. They may not know a UI interaction is expensive to build — and a collaborative approach will usually result in better outcomes for both sides.
+Designers often appreciate this feedback. They may not know a UI interaction is expensive to build — and a collaborative approach usually results in better outcomes for both sides.
 
 ---
 
 ## Step 2: Tailor `tailwind.config.js` to the Design
 
-Most devs know they can extend Tailwind’s theme. But when working from a fixed design system, I recommend something stronger: **override the default theme entirely**.
+Most devs know they can extend Tailwind’s theme. When working from a fixed design system, I recommend **overriding the default theme entirely**.
 
 In most projects, I overwrite:
 

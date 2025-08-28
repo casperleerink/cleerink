@@ -8,14 +8,14 @@ export default function Home() {
           <h2 className="font-semibold text-xl">Open Source</h2>
           <ul className="grid grid-cols-1 sm:grid-cols-2 items-start gap-4 sm:gap-8">
             <WorkItem
-              title="Sanity Plugin Icons"
-              description="A sanity plugin for picking icons based on the sanity-plugin-icon-picker, but with improved UI and no default loading of icon sets"
-              github="https://github.com/casperleerink/sanity-plugin-icons"
-            />
-            <WorkItem
               title="React Matters"
               description="A helper library for rendering React components as matter.js bodies allowing any react component to be animated by the matter.js physics engine. (Alpha)"
               github="https://github.com/casperleerink/react-matters"
+            />
+            <WorkItem
+              title="Sanity Plugin Icons"
+              description="A sanity plugin for picking icons based on the sanity-plugin-icon-picker, but with improved UI and no default loading of icon sets"
+              github="https://github.com/casperleerink/sanity-plugin-icons"
             />
           </ul>
           <div className="flex flex-col gap-2">
