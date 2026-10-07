@@ -23,12 +23,6 @@ module.exports = {
       deepblue: "#1B5E73",
     },
     extend: {
-      keyframes: {
-        "slide-left": {
-          "0%": { transform: "translateX(-100%)" },
-          "100%": { transform: "translateX(0)" },
-        },
-      },
       typography: {
         DEFAULT: {
           css: {
