@@ -1,16 +1,9 @@
-import { compareDesc } from "date-fns";
-import { allPosts } from "contentlayer/generated";
-import { PostCard } from "@/components/post-card";
 import { WorkItem } from "@/components/work-item";
 import { CodeToScore } from "@/components/code-to-score";
 import { projects } from "./projects";
 import Link from "next/link";
 
 export default function Home() {
-  const posts = allPosts.sort((a, b) =>
-    compareDesc(new Date(a.date), new Date(b.date))
-  );
-
   return (
     <main className="px-12 py-44">
       <div className="mx-auto max-w-screen-lg flex flex-col gap-12">
@@ -86,23 +79,6 @@ export default function Home() {
                 <WorkItem key={p.title} {...p} />
               ))}
           </ul>
-        </section>
-
-        <section className="flex flex-col gap-4">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-gray-500 text-lg font-medium">Writings</h2>
-            <Link
-              href="/blog"
-              className="text-sm text-gray-500 hover:text-gray-200 transition-colors"
-            >
-              View all
-            </Link>
-          </div>
-          <div className="flex flex-col gap-4">
-            {posts.slice(0, 3).map((post) => (
-              <PostCard key={post.url} {...post} />
-            ))}
-          </div>
         </section>
       </div>
     </main>

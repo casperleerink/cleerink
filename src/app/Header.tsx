@@ -27,12 +27,6 @@ const Header: React.FC<Props> = ({ className = "" }) => {
               Me
             </Link> */}
             <Link
-              href="/blog"
-              className="hover:text-gray-100 transition-colors"
-            >
-              Blog
-            </Link>
-            <Link
               href="/work"
               className="hover:text-gray-100 transition-colors"
             >

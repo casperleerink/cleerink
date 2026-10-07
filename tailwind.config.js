@@ -22,16 +22,6 @@ module.exports = {
       beige: "#F0E7B5",
       deepblue: "#1B5E73",
     },
-    extend: {
-      typography: {
-        DEFAULT: {
-          css: {
-            "code::before": { content: '""' },
-            "code::after": { content: '""' },
-          },
-        },
-      },
-    },
   },
-  plugins: [require("@tailwindcss/typography")],
+  plugins: [],
 };
