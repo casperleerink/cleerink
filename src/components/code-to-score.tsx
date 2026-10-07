@@ -5,8 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { playNote, startAudio } from "./piano-synth";
 
 /**
- * A code snippet whose words slide into place as notes, then play back as a
- * short piece in D minor. Every word is one note.
+ * A short piece in D minor on a piano roll. Its notes regroup into the shape
+ * of the code that plays it, drawn as bars like an editor minimap, and back.
+ * Every word of the code is one note.
  */
 
 const TEMPO = 90;
@@ -46,7 +47,7 @@ type Token = { text: string; line: number; col: number };
 function tokenize(source: string) {
   const tokens: Token[] = [];
   source.split("\n").forEach((text, line) => {
-    const pattern = /"[^"]*"|\w+|\S/g;
+    const pattern = /"[^"]*"|\w+/g;
     let match: RegExpExecArray | null;
     while ((match = pattern.exec(text))) {
       tokens.push({ text: match[0], line, col: match.index });
@@ -55,29 +56,25 @@ function tokenize(source: string) {
   return tokens;
 }
 
-const TOKENS = tokenize(SNIPPET);
-const isWord = (t: Token) => /^["\w]/.test(t.text);
-const WORDS = TOKENS.filter(isWord);
-const PUNCT = TOKENS.filter((t) => !isWord(t));
+const WORDS = tokenize(SNIPPET);
 const LINES = SNIPPET.split("\n");
 const MAX_COLS = Math.max(...LINES.map((l) => l.length));
 
-// Timeline of one loop, in seconds.
-const HOLD_CODE = 3;
-const MORPH = 2.6;
+// Timeline of one loop, in seconds. It starts with the piece playing.
 const PLAY = (BEATS + 2) * SECONDS_PER_BEAT;
-const CYCLE = HOLD_CODE + MORPH + PLAY + MORPH;
-const ROLL_ONLY = HOLD_CODE + MORPH + PLAY;
+const MORPH = 2.6;
+const HOLD_CODE = 3;
+const CYCLE = PLAY + MORPH + HOLD_CODE + MORPH;
 
 /** morph: 0 is code, 1 is notes. beat is set while the piece plays. */
 function phaseAt(t: number): { morph: number; beat: number | null } {
-  if (t < HOLD_CODE) return { morph: 0, beat: null };
-  t -= HOLD_CODE;
-  if (t < MORPH) return { morph: t / MORPH, beat: null };
-  t -= MORPH;
   if (t < PLAY) return { morph: 1, beat: t / SECONDS_PER_BEAT };
   t -= PLAY;
-  return { morph: 1 - t / MORPH, beat: null };
+  if (t < MORPH) return { morph: 1 - t / MORPH, beat: null };
+  t -= MORPH;
+  if (t < HOLD_CODE) return { morph: 0, beat: null };
+  t -= HOLD_CODE;
+  return { morph: t / MORPH, beat: null };
 }
 
 const clamp = (v: number) => Math.min(1, Math.max(0, v));
@@ -90,15 +87,10 @@ const wordMorph = (morph: number, i: number) =>
   ease(clamp(morph * (1 + STAGGER) - (STAGGER * i) / WORDS.length));
 
 function layout(width: number, height: number) {
-  const fontSize = Math.min((height / (LINES.length + 1.5)) * 0.55, width / (MAX_COLS * 0.6));
-  const charW = fontSize * 0.6;
-  const lineH = fontSize * 1.6;
+  const lineH = height / (LINES.length + 2);
+  const charW = Math.min(width / MAX_COLS, lineH * 0.45);
+  const barH = lineH * 0.28;
   const top = (height - LINES.length * lineH) / 2;
-  const codeAt = (t: Token) => ({
-    x: t.col * charW,
-    y: top + (t.line + 0.5) * lineH,
-    w: t.text.length * charW,
-  });
 
   const pad = height * 0.1;
   const rowH = (height - 2 * pad) / (HIGH - LOW);
@@ -107,15 +99,17 @@ function layout(width: number, height: number) {
   return {
     width,
     height,
-    fontSize,
+    barH,
     beatX,
-    codeAt,
     words: WORDS.map((token, i) => {
       const note = NOTES[i];
       return {
-        token,
         note,
-        code: codeAt(token),
+        code: {
+          x: token.col * charW,
+          y: top + (token.line + 0.5) * lineH,
+          w: token.text.length * charW - 2,
+        },
         roll: {
           x: beatX(note.start) + 2,
           y: pad + (HIGH - note.pitch) * rowH,
@@ -128,23 +122,17 @@ function layout(width: number, height: number) {
 
 type Layout = ReturnType<typeof layout>;
 
+function bar(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+  ctx.beginPath();
+  ctx.roundRect(x, y - h / 2, Math.max(w, h), h, h / 2);
+  ctx.fill();
+}
+
 function draw(ctx: CanvasRenderingContext2D, l: Layout, t: number) {
   const { morph, beat } = phaseAt(t);
   ctx.clearRect(0, 0, l.width, l.height);
-  ctx.textBaseline = "middle";
-  ctx.font = `${l.fontSize}px ui-monospace, SFMono-Regular, Menlo, monospace`;
-  ctx.lineCap = "round";
-  ctx.lineWidth = 2;
 
-  // Punctuation has no note, so it just fades.
-  ctx.fillStyle = GRAY;
-  ctx.globalAlpha = 0.35 * (1 - clamp(morph * 3));
-  for (const token of PUNCT) {
-    const p = l.codeAt(token);
-    ctx.fillText(token.text, p.x, p.y);
-  }
-
-  l.words.forEach(({ token, note, code, roll }, i) => {
+  l.words.forEach(({ note, code, roll }, i) => {
     const m = wordMorph(morph, i);
     const x = mix(code.x, roll.x, m);
     const y = mix(code.y, roll.y, m);
@@ -152,16 +140,9 @@ function draw(ctx: CanvasRenderingContext2D, l: Layout, t: number) {
     const playing = beat !== null && beat >= note.start && beat < note.end;
     const played = beat !== null && beat >= note.end;
 
-    ctx.fillStyle = GRAY;
-    ctx.globalAlpha = 0.7 * (1 - clamp(m * 2.5));
-    ctx.fillText(token.text, x, y);
-
-    ctx.strokeStyle = playing ? BEIGE : GRAY;
-    ctx.globalAlpha = playing ? 1 : clamp(m * 2 - 1) * (played ? 0.5 : 0.25);
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + w, y);
-    ctx.stroke();
+    ctx.fillStyle = playing ? BEIGE : GRAY;
+    ctx.globalAlpha = playing ? 1 : mix(0.3, played ? 0.5 : 0.25, m);
+    bar(ctx, x, y, w, mix(l.barH, 2, m));
   });
 
   if (beat !== null && beat <= BEATS) {
@@ -185,7 +166,7 @@ export function CodeToScore({ className = "" }: { className?: string }) {
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let l = layout(1, 1);
-    let time = reduced ? ROLL_ONLY - 0.01 : 0;
+    let time = reduced ? PLAY - 0.01 : 0;
     let lastBeat = -1;
     let visible = true;
     let last = performance.now();
@@ -244,7 +225,7 @@ export function CodeToScore({ className = "" }: { className?: string }) {
       <canvas
         ref={canvasRef}
         role="img"
-        aria-label="Lines of code whose words turn into notes and play as a short piano piece"
+        aria-label="A short piano piece on a piano roll whose notes regroup into the shape of code"
         className="absolute inset-0 w-full h-full"
       />
       <button
