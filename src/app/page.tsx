@@ -1,5 +1,5 @@
 import { WorkItem } from "@/components/work-item";
-import { CodeToScore } from "@/components/code-to-score";
+import { HeroAnimation } from "@/components/hero-animation";
 import { projects } from "./projects";
 import Link from "next/link";
 
@@ -58,7 +58,7 @@ export default function Home() {
           </div>
         </section>
 
-        <CodeToScore className="w-full aspect-[3/2] sm:aspect-[3/1]" />
+        <HeroAnimation className="w-full aspect-[3/2] sm:aspect-[3/1]" />
 
         <section id="featured" className="flex flex-col gap-4 scroll-mt-24">
           <div className="flex items-baseline justify-between">
